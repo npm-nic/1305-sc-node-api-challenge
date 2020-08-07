@@ -1,6 +1,11 @@
 const pModel = require("../data/helpers/projectModel");
-const projectsRouter = require("express").Router();
+const validateId = require("./middleware/validateProjectId");
+const validateProject = require("./middleware/validateProjectDetails");
 
+const projectsRouter = require("express").Router();
+projectsRouter.use("/:id", validateId);
+
+// // --> GET api/projects <-- // //
 projectsRouter.get("/", async (req, res) => {
   pModel
     .get()
@@ -12,7 +17,8 @@ projectsRouter.get("/", async (req, res) => {
     );
 });
 
-projectsRouter.get("/:id", validateProjectId, (req, res) => {
+// // --> GET api/projects/:id <-- // //
+projectsRouter.get("/:id", (req, res) => {
   const req_id = req.params.id;
   pModel
     .get(req_id)
@@ -25,7 +31,22 @@ projectsRouter.get("/:id", validateProjectId, (req, res) => {
     );
 });
 
-projectsRouter.post("/", validateProjectDetails, (req, res) => {
+// // --> GET api/projects/:id/actions <-- // //
+projectsRouter.get("/:id/actions", (req, res) => {
+  const req_id = req.params.id;
+  pModel
+    .getProjectActions(req_id)
+    .then((data) => res.status(200).json(data))
+    .catch((err) =>
+      res.status(500).json({
+        error: `Error getting project id:${req_id}`,
+        message: err.message,
+      })
+    );
+});
+
+// // --> POST api/projects/ <-- // //
+projectsRouter.post("/", validateProject, (req, res) => {
   const newProjectDetails = req.body;
   pModel
     .insert(newProjectDetails)
@@ -36,7 +57,9 @@ projectsRouter.post("/", validateProjectDetails, (req, res) => {
         .json({ error: "Error saving project", message: err.message })
     );
 });
-projectsRouter.put("/:id", validateProjectId, (req, res) => {
+
+// // --> PUT api/projects/:id <-- // //
+projectsRouter.put("/:id", (req, res) => {
   const req_id = req.params.id;
   const updatedProjectDetails = req.body;
   pModel
@@ -48,7 +71,9 @@ projectsRouter.put("/:id", validateProjectId, (req, res) => {
         .json({ error: "Error updating project", message: err.message })
     );
 });
-projectsRouter.delete("/:id", validateProjectId, (req, res) => {
+
+// // --> DELETE api/projects/:id <-- // //
+projectsRouter.delete("/:id", (req, res) => {
   const req_id = req.params.id;
   pModel
     .remove(req_id)
@@ -59,28 +84,5 @@ projectsRouter.delete("/:id", validateProjectId, (req, res) => {
         .json({ error: "Error deleting project", message: err.message })
     );
 });
-
-async function validateProjectId(req, res, next) {
-  const req_id = req.params.id;
-  try {
-    const projectFound = await pModel.get(req_id);
-    projectFound
-      ? next()
-      : res.status(200).json({ message: `no project with the id: ${req_id}` });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: "Error validating project id", err: error.message });
-  }
-}
-function validateProjectDetails(req, res, next) {
-  const { name, description } = req.body;
-  !name || !description
-    ? res.status(400).json({
-        message:
-          "please include both name & description on body when making a post",
-      })
-    : next();
-}
 
 module.exports = projectsRouter;
