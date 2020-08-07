@@ -26,14 +26,26 @@ projectsRouter.get("/:id", validateProjectId, (req, res) => {
 });
 
 projectsRouter.post("/", validateProjectDetails, (req, res) => {
-  const newPostDetails = req.body;
+  const newProjectDetails = req.body;
   pModel
-    .insert(newPostDetails)
-    .then((data) => res.status(201).json(data))
+    .insert(newProjectDetails)
+    .then((data) => res.status(201).json({ created: data }))
     .catch((err) =>
       res
         .status(500)
         .json({ error: "Error saving project", message: err.message })
+    );
+});
+projectsRouter.put("/:id", validateProjectId, (req, res) => {
+  const req_id = req.params.id;
+  const updatedProjectDetails = req.body;
+  pModel
+    .update(req_id, updatedProjectDetails)
+    .then((data) => res.status(200).json({ updated: data }))
+    .catch((err) =>
+      res
+        .status(500)
+        .json({ error: "Error updating project", message: err.message })
     );
 });
 
