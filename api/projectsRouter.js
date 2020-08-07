@@ -48,6 +48,17 @@ projectsRouter.put("/:id", validateProjectId, (req, res) => {
         .json({ error: "Error updating project", message: err.message })
     );
 });
+projectsRouter.delete("/:id", validateProjectId, (req, res) => {
+  const req_id = req.params.id;
+  pModel
+    .remove(req_id)
+    .then((data) => res.status(200).json({ deleted: data }))
+    .catch((err) =>
+      res
+        .status(500)
+        .json({ error: "Error deleting project", message: err.message })
+    );
+});
 
 async function validateProjectId(req, res, next) {
   const req_id = req.params.id;
