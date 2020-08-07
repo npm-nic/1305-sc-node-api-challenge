@@ -1,29 +1,40 @@
 const pModel = require("../data/helpers/projectModel");
 const projectsRouter = require("express").Router();
 
-projectsRouter.get("/", (req, res) => {
+projectsRouter.get("/", async (req, res) => {
   pModel
     .get()
-    .then((data) => {
-      res.json(data);
-    })
-    .catch((err) => {
+    .then((data) => res.status(200).json(data))
+    .catch((err) =>
       res
         .status(500)
-        .json({ error: "Error gathering resources", message: err.message });
-    });
+        .json({ error: "Error getting projects", message: err.message })
+    );
 });
 
 projectsRouter.get("/:id", validateProjectId, (req, res) => {
   const req_id = req.params.id;
   pModel
     .get(req_id)
-    .then((data) => res.json(data))
-    .catch((err) => {
+    .then((data) => res.status(200).json(data))
+    .catch((err) =>
+      res.status(500).json({
+        error: `Error getting project id:${req_id}`,
+        message: err.message,
+      })
+    );
+});
+
+projectsRouter.post("/", validateProjectDetails, (req, res) => {
+  const newPostDetails = req.body;
+  pModel
+    .insert(newPostDetails)
+    .then((data) => res.status(201).json(data))
+    .catch((err) =>
       res
         .status(500)
-        .json({ error: "Error gathering resources", message: err.message });
-    });
+        .json({ error: "Error saving project", message: err.message })
+    );
 });
 
 async function validateProjectId(req, res, next) {
@@ -33,9 +44,20 @@ async function validateProjectId(req, res, next) {
     projectFound
       ? next()
       : res.status(200).json({ message: `no project with the id: ${req_id}` });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Error validating project id", err: error.message });
   }
+}
+function validateProjectDetails(req, res, next) {
+  const { name, description } = req.body;
+  !name || !description
+    ? res.status(400).json({
+        message:
+          "please include both name & description on body when making a post",
+      })
+    : next();
 }
 
 module.exports = projectsRouter;
